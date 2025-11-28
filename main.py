@@ -2,7 +2,6 @@
 
 import argparse
 import math
-import shutil
 import sys
 import queue
 
@@ -25,13 +24,6 @@ def int_or_str(text):
 
 
 q = queue.Queue()
-
-def cmap_type(value):
-    try:
-        return plt.get_cmap(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"Invalid cmap: {value}")
-
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument(
@@ -95,7 +87,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--cmap",
-    type=cmap_type,
+    type=str,
     choices=plt.colormaps(),
     default="plasma",
     help="color gradient used for frequency bands (default: %(default)s)",
@@ -103,9 +95,8 @@ parser.add_argument(
 args = parser.parse_args(remaining)
 
 
-def setup_graph(bands, low, interval, cmap):
-    if plotdata is None:
-        raise ValueError
+def setup_graph(bands, low, interval, cmap_str):
+    cmap = plt.get_cmap(cmap_str)
 
     plt.rcParams["toolbar"] = "none"
     fig, ax = plt.subplots()
