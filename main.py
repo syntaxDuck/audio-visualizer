@@ -169,18 +169,32 @@ def setup_graph(bands, low, interval, cmap_str, save_path=None, total_frames=Non
     fig.patch.set_facecolor("black")
     ax.set_facecolor("black")
 
-    for xpos in range(10, bands, 10):
+    if bands <= 50:
+        step = 10
+    elif bands <= 100:
+        step = 20
+    elif bands <= 200:
+        step = 50
+    else:
+        step = 100
+
+    for xpos in range(step, bands, step):
         ax.axvline(x=xpos, color="gray", linestyle="--", linewidth=0.5, alpha=0.5)
 
-        label = int(low + xpos * delta_f)
+        hz = int(low + xpos * delta_f)
+        if hz >= 1000:
+            label = f"{hz // 1000}k"
+        else:
+            label = str(hz)
+
         ax.text(
             xpos,
             1.02,
-            str(label) + "hz",
+            label,
             color="white",
             ha="center",
             va="top",
-            fontsize=8,
+            fontsize=7,
         )
 
     ax.set_xlim(-0.5, bands - 0.5)
