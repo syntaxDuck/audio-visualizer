@@ -18,6 +18,24 @@ def int_or_str(text):
         return text
 
 
+def resolve_input_device(parser, device_arg):
+    """Resolve explicit input device or fallback to the system default."""
+    if device_arg is not None:
+        return device_arg, sd.query_devices(device_arg, "input")
+
+    default_input = sd.default.device[0]
+    if default_input is None or default_input < 0:
+        parser.error("No default input device found. Use -l to list available devices.")
+
+    try:
+        return default_input, sd.query_devices(default_input, "input")
+    except Exception as exc:  # pragma: no cover - depends on host audio stack
+        parser.error(
+            f"Unable to use default input device ({default_input}): {exc}. "
+            "Use -l to list available devices."
+        )
+
+
 try:
     columns, _ = shutil.get_terminal_size()
 except AttributeError:
@@ -51,7 +69,10 @@ parser.add_argument(
     "-c", "--columns", type=int, default=columns, help="width of spectrogram"
 )
 parser.add_argument(
-    "-d", "--device", type=int_or_str, help="input device (numeric ID or substring)"
+    "-d",
+    "--device",
+    type=int_or_str,
+    help="input device (numeric ID or substring, default: system default input)",
 )
 parser.add_argument(
     "-g",
@@ -87,7 +108,8 @@ for bg, fg in zip(colors, colors[1:]):
             gradient.append(f"\x1b[{fg};{bg + 10}m{char}")
 
 try:
-    samplerate = sd.query_devices(args.device, "input")["default_samplerate"]
+    input_device, device_info = resolve_input_device(parser, args.device)
+    samplerate = device_info["default_samplerate"]
 
     delta_f = (high - low) / (args.columns - 1)
     fftsize = math.ceil(samplerate / delta_f)
@@ -109,7 +131,7 @@ try:
             print("no input")
 
     with sd.InputStream(
-        device=args.device,
+        device=input_device,
         channels=1,
         callback=callback,
         blocksize=int(samplerate * args.block_duration / 1000),

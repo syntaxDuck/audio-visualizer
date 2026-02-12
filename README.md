@@ -2,6 +2,8 @@
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 # Audio Visualizer
 
+![Demo](assets/demo.webp)
+
 A Python application that creates real-time audio visualization by analyzing live microphone input and displaying frequency spectrum data as an animated bar chart.
 
 ## Overview
@@ -22,7 +24,8 @@ This project provides a visual representation of audio frequencies using matplot
   - Audio device selection
   - Sample rate configuration
 - **Device Listing**: Built-in utility to list all available audio devices
-- **Example Scripts**: Additional visualization examples included
+- **GIF Export**: Save animations as GIF for demos and documentation
+- **Test Mode**: Generate test visualizations without microphone input
 
 ## Requirements
 
@@ -30,8 +33,6 @@ This project provides a visual representation of audio frequencies using matplot
 - NumPy
 - Matplotlib
 - SoundDevice
-- SoundCard
-- PyAudio
 
 ## Installation
 
@@ -41,14 +42,27 @@ git clone https://github.com/syntaxDuck/audio-visualizer.git
 cd audio-visualizer
 ```
 
-2. Install dependencies using Pipenv:
+2. Install `uv` (if needed):
 ```bash
-pipenv install
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Or install packages directly with pip:
+3. Install system audio prerequisites:
+- **macOS** (Homebrew):
+  ```bash
+  brew install portaudio
+  ```
+- **Ubuntu/Debian**:
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y portaudio19-dev
+  ```
+- **Windows**:
+  PortAudio is bundled through Python wheels in most setups.
+
+4. Sync dependencies:
 ```bash
-pip install numpy matplotlib sounddevice soundcard pyaudio
+uv sync
 ```
 
 ## Usage
@@ -57,13 +71,14 @@ pip install numpy matplotlib sounddevice soundcard pyaudio
 
 Run the main visualizer:
 ```bash
-python main.py -d DEVICE
+uv run python main.py
 ```
 
 ### Command-Line Arguments
 
-- **`-d, --device DEVICE`** (Required)
+- **`-d, --device DEVICE`** (Optional)
   - Input device: numeric ID or substring of device name
+  - If omitted, uses the OS default input device
   - Use `-l` to list available devices
 
 - **`-l, --list-devices`**
@@ -75,7 +90,20 @@ python main.py -d DEVICE
 
 - **`-i, --interval INTERVAL`**
   - Graph update interval in milliseconds
-  - Default: 75 ms
+  - Default: 30 ms
+
+- **`-o, --output OUTPUT`**
+  - Output GIF filename (saves animation and exits)
+  - Use with `--test-mode` for testing without microphone
+  - Example: `-o demo.gif`
+
+- **`--duration DURATION`**
+  - Recording duration in seconds for GIF output
+  - Default: 10 seconds
+
+- **`--test-mode`**
+  - Use synthetic sine wave audio instead of microphone
+  - Useful for testing without audio input device
 
 - **`-r, --range LOW HIGH`**
   - Frequency range in Hz (e.g., `-r 20 20000`)
@@ -98,22 +126,37 @@ python main.py -d DEVICE
 
 List available audio devices:
 ```bash
-python main.py -l
+uv run python main.py -l
 ```
 
 Visualize audio from device 2 with custom range:
 ```bash
-python main.py -d 2 -r 100 5000 -b 50
+uv run python main.py -d 2 -r 100 5000 -b 50
 ```
 
 Visualize with different colormap and gain:
 ```bash
-python main.py -d "Microphone" -g 15 --cmap viridis
+uv run python main.py -d "Microphone" -g 15 --cmap viridis
 ```
 
 Faster update rate for real-time response:
 ```bash
-python main.py -d 0 -i 30
+uv run python main.py -d 0 -i 30
+```
+
+### GIF Generation
+
+Generate a GIF animation of the visualizer (useful for demos or documentation):
+
+```bash
+# Generate test GIF (no microphone needed)
+uv run python main.py --test-mode -o demo.gif
+
+# Record from microphone
+uv run python main.py -d 0 -o live.gif --duration 10
+
+# Custom settings
+uv run python main.py --test-mode -o custom.gif --duration 5 -b 50 --cmap viridis
 ```
 
 ## Example Scripts
@@ -125,7 +168,7 @@ Plots live waveform data from the microphone input in real-time. Shows the audio
 
 **Usage:**
 ```bash
-python examples/sounddevice_rt_plot_device.py -d DEVICE
+uv run python examples/sounddevice_rt_plot_device.py
 ```
 
 ### `sounddevice_rt_spectrogram.py`
@@ -133,7 +176,7 @@ Displays a text-mode spectrogram in the terminal showing frequency content over 
 
 **Usage:**
 ```bash
-python examples/sounddevice_rt_spectrogram.py -d DEVICE
+uv run python examples/sounddevice_rt_spectrogram.py
 ```
 
 ## How It Works
@@ -149,7 +192,7 @@ python examples/sounddevice_rt_spectrogram.py -d DEVICE
 
 - **main.py**: Core visualization application with matplotlib-based bar chart display
 - **examples/**: Reference implementations using different visualization methods
-- **Pipfile**: Dependency management using Pipenv
+- **pyproject.toml / uv.lock**: Dependency and environment management with uv
 
 ## Customization
 

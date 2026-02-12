@@ -21,6 +21,24 @@ def int_or_str(text):
         return text
 
 
+def resolve_input_device(parser, device_arg):
+    """Resolve explicit input device or fallback to the system default."""
+    if device_arg is not None:
+        return device_arg, sd.query_devices(device_arg, 'input')
+
+    default_input = sd.default.device[0]
+    if default_input is None or default_input < 0:
+        parser.error('No default input device found. Use -l to list available devices.')
+
+    try:
+        return default_input, sd.query_devices(default_input, 'input')
+    except Exception as exc:  # pragma: no cover - depends on host audio stack
+        parser.error(
+            f'Unable to use default input device ({default_input}): {exc}. '
+            'Use -l to list available devices.'
+        )
+
+
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument(
     '-l', '--list-devices', action='store_true',
@@ -38,7 +56,7 @@ parser.add_argument(
     help='input channels to plot (default: the first)')
 parser.add_argument(
     '-d', '--device', type=int_or_str,
-    help='input device (numeric ID or substring)')
+    help='input device (numeric ID or substring, default: system default input)')
 parser.add_argument(
     '-w', '--window', type=float, default=200, metavar='DURATION',
     help='visible time slot (default: %(default)s ms)')
@@ -89,8 +107,8 @@ def update_plot(frame):
 
 
 try:
+    input_device, device_info = resolve_input_device(parser, args.device)
     if args.samplerate is None:
-        device_info = sd.query_devices(args.device, 'input')
         args.samplerate = device_info['default_samplerate']
 
     length = int(args.window * args.samplerate / (1000 * args.downsample))
@@ -109,7 +127,7 @@ try:
     fig.tight_layout(pad=0)
 
     stream = sd.InputStream(
-        device=args.device, channels=max(args.channels),
+        device=input_device, channels=max(args.channels),
         samplerate=args.samplerate, callback=audio_callback)
     ani = FuncAnimation(fig, update_plot, interval=args.interval, blit=True)
     with stream:
