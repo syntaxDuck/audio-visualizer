@@ -93,8 +93,8 @@ uv run python main.py
   - Default: 30 ms
 
 - **`-o, --output OUTPUT`**
-  - Output GIF filename (saves animation and exits)
-  - Use with `--test-mode` for testing without microphone
+  - Output GIF filename
+  - **Requires `--test-mode`** - GIF export only works with synthetic audio
   - Example: `-o demo.gif`
 
 - **`--duration DURATION`**
@@ -146,18 +146,17 @@ uv run python main.py -d 0 -i 30
 
 ### GIF Generation
 
-Generate a GIF animation of the visualizer (useful for demos or documentation):
+Generate a GIF animation of the visualizer using synthetic test audio:
 
 ```bash
 # Generate test GIF (no microphone needed)
 uv run python main.py --test-mode -o demo.gif
 
-# Record from microphone
-uv run python main.py -d 0 -o live.gif --duration 10
-
 # Custom settings
 uv run python main.py --test-mode -o custom.gif --duration 5 -b 50 --cmap viridis
 ```
+
+Note: GIF export currently only supports test mode (synthetic audio), not live microphone input.
 
 ## Example Scripts
 
